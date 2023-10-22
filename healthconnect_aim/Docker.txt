@@ -1,0 +1,35 @@
+FROM python:3.8.17-slim-bullseye
+LABEL GPUS=0 GPU_MEMORY=0
+
+LABEL description="Doctor Validate AIM. Now with royalities."
+LABEL royalty_addresses = "[{\"driver\": \"ethereum\", \"network\": \"sepolia\", \"address\":\"0x29B5B32cCC3A8cc06D91af9F1Dc5c7466218A005\"}]"
+#0.019 or 1.9% royalty fee, 1000s.
+LABEL royalty_fee = 19
+
+
+ENV DEBIAN_FRONTEND=1
+
+WORKDIR /opt
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    python3-pip \
+    python3-dev \
+    build-essential \
+    cmake \
+    git \
+    curl \
+    ffmpeg \
+    ca-certificates \
+    libjpeg-dev \
+    libpng-dev && \
+    rm -rf /var/lib/apt/lists/*
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r ./requirements.txt
+
+COPY ./app .
+
+EXPOSE 4000
+
+CMD ["python3", "./main.py"]
