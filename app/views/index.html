@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Blockchain Hackathon Login</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f0f0f0;
+        }
+        .container {
+            background-color: #fff;
+            border-radius: 5px;
+            box-shadow: 0px 0px 10px 0px #888888;
+            padding: 20px;
+            width: 400px; /* Increase the width to 400px */
+            margin: 0 auto;
+            margin-top: 50px;
+        }
+        h1 {
+            color: #333;
+        }
+        #login-button, #create-profile-button {
+            background-color: #3498db;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Blockchain Hackathon Login</h1>
+        <div id="user-details" style="display: none;">
+            <p>User Ethereum Address: <span id="user-address"></span></p>
+        </div>
+        <button id="login-button" onclick="web3_metamask_login()">Log In with MetaMask</button>
+        <button id="create-profile-button" onclick="redirectToProfilePage()">Create Profile</button>
+        <button id="create-profile-button" onclick="signInWithEthereum()">Sign</button>
+    </div>
+
+    <script src="https://cdn.ethers.io/lib/ethers-5.6.4.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/web3@1.5.2/dist/web3.min.js"></script>
+
+    <script>
+        async function web3_check_metamask() {
+            if (!window.ethereum) {
+                console.error('It seems that the MetaMask extension is not detected. Please install MetaMask first.');
+                alert('It seems that the MetaMask extension is not detected. Please install MetaMask first.');
+                return false;
+            } else {
+                console.log('MetaMask extension has been detected!!');
+                return true;
+            }
+        }
+
+        async function web3_metamask_login() {
+            if (await web3_check_metamask()) {
+                console.log('Initiating Login Process');
+                const provider = new ethers.providers.Web3Provider(window.ethereum);
+
+                try {
+                    await window.ethereum.request({ method: 'eth_requestAccounts' });
+                    console.log('Connected!!');
+
+                    const signer = provider.getSigner();
+                    const address = await signer.getAddress();
+                    
+                    // Save the user's Ethereum address as a cookie
+                    document.cookie = `userAddress=${address}`;
+                    
+                    // Display the user's Ethereum address on the page
+                    document.getElementById('user-address').textContent = address;
+                    document.getElementById('user-details').style.display = 'block';
+                } catch (error) {
+                    console.error('Error connecting with MetaMask:', error);
+                }
+            }
+        }
+
+        function redirectToProfilePage() {
+            window.location.href = '/create_profile';
+        }
+
+
+
+        // Import Web3
+        // Correct Web3 initialization
+        var web3 = new Web3(new Web3.providers.HttpProvider('https://rpc.mordor.etccooperative.org'));
+
+
+        // Function to sign in with Ethereum
+        // Function to sign in with Ethereum
+        async function signInWithEthereum() {
+            // Request account access
+            const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+            const account = accounts[0];
+            
+            console.log('Selected account:', account);
+
+            // Create a message to sign
+            const message = "Please sign this message to prove you own this Ethereum account.";
+            const messageHash = web3.utils.sha3(message);
+
+            // Sign the message
+            const signature = await web3.eth.sign(messageHash, account);
+
+            // Send signature & account to the server for verification
+            fetch('/auth', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ signature, account }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Handle authentication success or failure
+            });
+        }
+
+    </script>
+</body>
+</html>

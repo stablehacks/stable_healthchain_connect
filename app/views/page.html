@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Healthcare Match Form</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        h2 {
+            color: #333;
+        }
+
+        #userTypeForm, #patientForm, #hospitalForm, #matches {
+            max-width: 400px;
+            margin: 20px auto;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        select, input {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 16px;
+            box-sizing: border-box;
+        }
+
+        button {
+            background-color: #4caf50;
+            color: white;
+            padding: 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        #matches {
+            display: none;
+        }
+
+        #matchesOutput {
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>Healthcare Match Form</h2>
+
+    <div id="userTypeForm">
+        <h3>Are you a patient or a hospital?</h3>
+        <form id="userTypeWorkflow" onsubmit="submitUserTypeForm(event)">
+            <label for="userType">Select User Type:</label>
+            <select id="userType" name="userType" required>
+                <option value="patient">Patient</option>
+                <option value="hospital">Hospital</option>
+            </select><br>
+
+            <button type="submit">Continue</button>
+        </form>
+    </div>
+
+    <div id="patientForm" style="display: none;">
+        <h3>Patients:</h3>
+        <form id="patientWorkflow" onsubmit="submitForm(event, 'patient')">
+            <label for="patientLocation">What is your location:</label>
+            <input type="text" id="patientLocation" name="location" required><br>
+
+            <label for="doctorType">Who are you looking for:</label>
+            <select id="doctorType" name="type" required>
+                <option value="physician">Family Medicine</option>
+                <option value="dentist">Orthopedic</option>
+                <option value="optometrist">Optometrist</option>
+            </select><br>
+
+            <button type="submit">Find Matches</button>
+        </form>
+    </div>
+
+    <div id="hospitalForm" style="display: none;">
+        <h3>Hospitals:</h3>
+        <form id="hospitalWorkflow" onsubmit="submitForm(event, 'hospital')">
+            <label for="hospitalType">Who are you looking for:</label>
+            <select id="hospitalType" name="type" required>
+                <option value="doctor">Doctor</option>
+                <option value="nurse">Nurse</option>
+                <option value="dentist">Dentist</option>
+            </select><br>
+
+            <label for="hospitalLocation">Which location:</label>
+            <input type="text" id="hospitalLocation" name="location" required><br>
+
+            <button type="submit">Find Matches</button>
+        </form>
+    </div>
+
+    <!-- Add the following elements for displaying matches -->
+    <div id="matches">
+        <h3>Matches:</h3>
+        <pre id="matchesOutput"></pre>
+    </div>
+
+    <script>
+        function submitUserTypeForm(event) {
+            event.preventDefault();
+
+            const userType = document.getElementById('userType').value;
+            if (userType === 'patient') {
+                document.getElementById('patientForm').style.display = 'block';
+                document.getElementById('hospitalForm').style.display = 'none';
+            } else if (userType === 'hospital') {
+                document.getElementById('patientForm').style.display = 'none';
+                document.getElementById('hospitalForm').style.display = 'block';
+            }
+        }
+
+        async function submitForm(event, userType) {
+            event.preventDefault();
+
+            const locationField = userType === 'patient' ? 'patientLocation' : 'hospitalLocation';
+            const typeField = userType === 'patient' ? 'doctorType' : 'hospitalType';
+
+            const location = document.getElementById(locationField).value;
+            const doctorType = document.getElementById(typeField).value;
+
+            // Replace the URL with your actual endpoint
+            const response = await fetch('http://18.207.252.250:4000/doctors');
+            const data = await response.json();
+
+            const matches = data.filter(doctor => 
+                doctor.location_of_practice.toLowerCase().includes(location.toLowerCase()) &&
+                doctor.specialization.toLowerCase().includes(doctorType.toLowerCase())
+            );
+
+            displayMatches(matches);
+        }
+
+        function displayMatches(matches) {
+            const formattedMatches = matches.map((doctor, index) => {
+                return `${index + 1}. Doctor ID: ${doctor.doctor_id}, Name: ${doctor.name}, Specialization: ${doctor.specialization}, Phone: ${doctor.phone_number}`;
+            });
+
+            document.getElementById('matchesOutput').innerText = formattedMatches.join('\n');
+            document.getElementById('matches').style.display = 'block';
+        }
+    </script>
+
+</body>
+</html>
