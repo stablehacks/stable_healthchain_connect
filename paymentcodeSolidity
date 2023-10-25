@@ -1,0 +1,14 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+contract FundMe {
+    address payable public recipient;
+
+    constructor(address payable _recipient) {
+        recipient = _recipient;
+    }
+
+    function fund() public payable {
+        recipient.transfer(msg.value);
+    }
+}
