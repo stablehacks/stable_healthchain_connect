@@ -1,0 +1,31 @@
+<!-- templates/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hello Solidity Web3 Interface</title>
+</head>
+<body>
+    <h1>Hello Solidity Web3 Interface</h1>
+
+    <form action="/interact_with_blockchain" method="post">
+        <button type="submit">Get Message</button>
+    </form>
+
+    <form action="/set_message" method="post">
+        <button type="submit">Set Message</button>
+    </form>
+
+    <div>
+        <!-- Display logs here -->
+        {% if logs %}
+            <ul>
+                {% for log in logs %}
+                    <li>{{ log }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    </div>
+</body>
+</html>
