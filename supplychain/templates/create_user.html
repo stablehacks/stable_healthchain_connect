@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Create User Profile</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f0f0f0;
+        }
+        .container {
+            background-color: #fff;
+            border-radius: 5px;
+            box-shadow: 0px 0px 10px 0px #888888;
+            padding: 20px;
+            width: 400px;
+            margin: 0 auto;
+            margin-top: 50px;
+        }
+        h1 {
+            color: #333;
+        }
+        .form-input {
+            margin: 10px 0;
+        }
+        #upload-button {
+            background-color: #3498db;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Create user Profile</h1>
+        <form id="user-form" method="post" action="/interact_with_blockchain_create_user" onsubmit="uploadUser(event)">
+        Name: <input type="text" name="name"><br>
+        Physical Address: <input type="text" name="physical_address"><br>
+        Phone Number: <input type="text" name="phone_number"><br>
+        User Type: <input type="text" name="user_type"><br>
+        Public Key: <input type="text" name="public_key"><br>
+        <input type="submit" value="Submit">
+    </form>
+    </div>
+
+    <script>
+            function uploadUser(event) {
+        event.preventDefault();
+
+        // Get form data
+        const formData = new FormData(document.getElementById('user-form'));
+
+        // Use fetch to send the data to the server and interact with the blockchain
+        fetch('/interact_with_blockchain_create_user', {
+            method: 'POST',
+            body: formData,
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Handle the response from the server
+            console.log(data);
+        })
+        .catch(error => console.error('Error:', error));
+    }
+
+    </script>
+</body>
+</html>

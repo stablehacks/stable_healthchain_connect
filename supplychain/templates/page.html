@@ -82,7 +82,7 @@
 
             <label for="doctorType">Who are you looking for:</label>
             <select id="doctorType" name="type" required>
-                <option value="physician">Family Medicine</option>
+                <option value="Family Medicine">Family Medicine</option>
                 <option value="dentist">Orthopedic</option>
                 <option value="optometrist">Optometrist</option>
             </select><br>
@@ -115,49 +115,80 @@
     </div>
 
     <script>
-        function submitUserTypeForm(event) {
-            event.preventDefault();
+    // Function to handle user type form submission
+    function submitUserTypeForm(event) {
+        event.preventDefault();
 
-            const userType = document.getElementById('userType').value;
-            if (userType === 'patient') {
-                document.getElementById('patientForm').style.display = 'block';
-                document.getElementById('hospitalForm').style.display = 'none';
-            } else if (userType === 'hospital') {
-                document.getElementById('patientForm').style.display = 'none';
-                document.getElementById('hospitalForm').style.display = 'block';
-            }
+        // Get the selected user type
+        const userType = document.getElementById('userType').value;
+
+        // Show/hide relevant forms based on user type
+        if (userType === 'patient') {
+            document.getElementById('patientForm').style.display = 'block';
+            document.getElementById('hospitalForm').style.display = 'none';
+        } else if (userType === 'hospital') {
+            document.getElementById('patientForm').style.display = 'none';
+            document.getElementById('hospitalForm').style.display = 'block';
         }
+    }
 
-        async function submitForm(event, userType) {
-            event.preventDefault();
+    // Function to handle form submission
+    async function submitForm(event, userType) {
+    event.preventDefault();
 
-            const locationField = userType === 'patient' ? 'patientLocation' : 'hospitalLocation';
-            const typeField = userType === 'patient' ? 'doctorType' : 'hospitalType';
+    const locationField = userType === 'patient' ? 'patientLocation' : 'hospitalLocation';
+    const typeField = userType === 'patient' ? 'doctorType' : 'hospitalType';
 
-            const location = document.getElementById(locationField).value;
-            const doctorType = document.getElementById(typeField).value;
+    const location = document.getElementById(locationField).value;
+    const doctorType = document.getElementById(typeField).value;
 
-            // Replace the URL with your actual endpoint
-            const response = await fetch('http://18.207.252.250:4000/doctors');
-            const data = await response.json();
-
-            const matches = data.filter(doctor => 
-                doctor.location_of_practice.toLowerCase().includes(location.toLowerCase()) &&
-                doctor.specialization.toLowerCase().includes(doctorType.toLowerCase())
-            );
-
-            displayMatches(matches);
+    try {
+        const response = await fetch('/doctors');
+        if (!response.ok) {
+            throw new Error('Failed to fetch doctors data');
         }
+        const data = await response.json();
 
-        function displayMatches(matches) {
-            const formattedMatches = matches.map((doctor, index) => {
-                return `${index + 1}. Doctor ID: ${doctor.doctor_id}, Name: ${doctor.name}, Specialization: ${doctor.specialization}, Phone: ${doctor.phone_number}`;
-            });
+        const matches = data;
 
-            document.getElementById('matchesOutput').innerText = formattedMatches.join('\n');
-            document.getElementById('matches').style.display = 'block';
+        if (matches.length > 0) {
+            // Construct URL with query parameters
+            const queryParams = new URLSearchParams();
+            queryParams.append('id', matches[0].id);
+            queryParams.append('firstName', matches[0].firstName);
+            queryParams.append('lastName', matches[0].lastName);
+            queryParams.append('certificateHash', matches[0].certificateHash);
+            queryParams.append('specialization', matches[0].specialization);
+            // Add other properties as needed
+
+            const url = `/match_page_result?${queryParams.toString()}`;
+
+            // Redirect to match_page_result.html with query parameters
+            window.location.href = url;
+        } else {
+            alert('No matching doctors found.');
         }
-    </script>
+    } catch (error) {
+        console.error('Error fetching doctors data:', error);
+        alert('Failed to fetch doctors data. Please try again.');
+    }
+}
+
+    // Function to display matches on the page
+    function displayMatches(matches) {
+        // Format the matches for display
+        const formattedMatches = matches.map((doctor, index) => {
+            return `${index + 1}. Doctor ID: ${doctor.doctor_id}, Name: ${doctor.name}, Specialization: ${doctor.specialization}, Phone: ${doctor.phone_number}`;
+        });
+
+        // Set the formatted matches in the output element
+        document.getElementById('matchesOutput').innerText = formattedMatches.join('\n');
+
+        // Show the matches section
+        document.getElementById('matches').style.display = 'block';
+    }
+</script>
+
 
 </body>
 </html>

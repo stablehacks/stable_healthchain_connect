@@ -1,6 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+
+contract Usertoken is ERC20 {
+    constructor() ERC20("User", "UserToken") {
+        _mint(msg.sender, 1000000 * (10 ** uint256(decimals())));
+    }
+}
+
 contract Users {
 
     struct User {
@@ -13,6 +21,7 @@ contract Users {
     }
 
     User[] public users;
+    Usertoken public tokenContract;
     uint public latestId = 1;
     mapping(string => string) public publicKeyToUserType;
 
@@ -44,8 +53,21 @@ contract Users {
         return publicKeyToUserType[public_key];
     }
 
-    function payTo(string memory public_key, uint amount) public {
-        emit Payment(public_key, amount);
+
+
+    constructor(address _tokenAddress) {
+        tokenContract = Usertoken(_tokenAddress);
     }
+
+    function payTo(string memory public_key, uint amount) public {
+    // Check allowance
+    require(tokenContract.allowance(msg.sender, address(this)) >= amount, "Insufficient allowance");
+
+    // Transfer tokens from user to contract
+    tokenContract.transferFrom(msg.sender, address(this), amount);
+
+    // Emit Payment event
+    emit Payment(public_key, amount);
+}
     event Payment(string public_key, uint amount);
 }

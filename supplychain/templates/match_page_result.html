@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doctor Profile</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 50px auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        p {
+            margin-bottom: 10px;
+        }
+
+        form {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 8px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+
+        button[type="submit"] {
+            background-color: #4caf50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        button[type="submit"]:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Doctor Profile</h1>
+        <p>ID: <span id="id"></span></p>
+        <p>Name: <span id="name"></span></p>
+        <p>Certificate Hash: <span id="certificateHash"></span></p>
+        <p>Specialization: <span id="specialization"></span></p>
+
+        <!-- Appointment form -->
+        <form id="appointmentForm">
+            <label for="doctorId">Doctor ID:</label>
+            <input type="number" id="doctorId" name="doctorId" required>
+            <label for="patientName">Patient Name:</label>
+            <input type="text" id="patientName" name="patientName" required>
+            <label for="appointmentDetails">Appointment Details:</label>
+            <input type="text" id="appointmentDetails" name="appointmentDetails" required>
+            <button type="submit">Make Appointment</button>
+        </form>
+    </div>
+
+    <script>
+        // Retrieve query parameters from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const id = urlParams.get('id');
+        const firstName = urlParams.get('firstName');
+        const lastName = urlParams.get('lastName');
+        const certificateHash = urlParams.get('certificateHash');
+        const specialization = urlParams.get('specialization');
+
+        // Display doctor's data
+        document.getElementById('id').innerText = id;
+        document.getElementById('name').innerText = `${firstName} ${lastName}`;
+        document.getElementById('certificateHash').innerText = certificateHash;
+        document.getElementById('specialization').innerText = specialization;
+
+        // Add event listener to the form submission
+        document.getElementById('appointmentForm').addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const form = event.target;
+            const formData = new FormData(form);
+            const doctorId = formData.get('doctorId');
+            const patientName = formData.get('patientName');
+            const appointmentDetails = formData.get('appointmentDetails');
+
+            try {
+                // Make a request to the Flask server endpoint to handle appointment
+                const response = await fetch('/make_appointment', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        doctorId: doctorId,
+                        patientName: patientName,
+                        appointmentDetails: appointmentDetails
+                    })
+                });
+                if (!response.ok) {
+                    throw new Error('Appointment failed');
+                }
+                alert('Appointment made successfully');
+            } catch (error) {
+                console.error('Appointment error:', error);
+                alert('Appointment failed. Please try again.');
+            }
+        });
+    </script>
+</body>
+</html>
