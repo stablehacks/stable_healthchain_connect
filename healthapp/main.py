@@ -1,9 +1,9 @@
 from flask import Flask, render_template, request, Response, jsonify
 from web3 import Web3
 import json
-
+import sqlite3
 app = Flask(__name__,template_folder='templates')
-
+import mysql.connector
 
 @app.route('/create_user')
 def create_user():
@@ -19,7 +19,7 @@ def interact_with_blockchain_create_user():
     # Get form data from the request
 
     # Specify the contract details and web3 provider
-    contract_address = '0xE02d248a844CF17c9042EB722A671CD08dAa59D4'
+    contract_address = '0x7c45720D60Cc4315f82260Ee169d54409B80aa6c'
     with open("Users_ABI.json") as f:
         contract_abi = json.load(f)
     web3_provider = 'https://sepolia.infura.io/v3/314f3f9b4c574f9ba6a18204cda5dd8d'
@@ -90,7 +90,7 @@ def interact_with_blockchain_create_user():
 @app.route('/interact_with_blockchain_create_doctor', methods=['POST'])
 def interact_with_blockchain_create_doctor():
     # Specify the contract details and web3 provider
-    contract_address = '0xE02d248a844CF17c9042EB722A671CD08dAa59D4'
+    contract_address = '0x7c45720D60Cc4315f82260Ee169d54409B80aa6c'
     with open("doctor_ABI.json") as f:
         contract_abi = json.load(f)
     web3_provider = 'https://sepolia.infura.io/v3/314f3f9b4c574f9ba6a18204cda5dd8d'
@@ -174,7 +174,7 @@ def interact_with_blockchain_create_doctor():
 def doctors():
     try:
         # Specify the contract details and web3 provider
-        contract_address = '0xE02d248a844CF17c9042EB722A671CD08dAa59D4'
+        contract_address = '0x7c45720D60Cc4315f82260Ee169d54409B80aa6c'
         with open("doctor_ABI.json") as f:
             contract_abi = json.load(f)
         web3_provider = 'https://sepolia.infura.io/v3/314f3f9b4c574f9ba6a18204cda5dd8d'
@@ -238,7 +238,7 @@ def index():
 def match_page_result():
     try:
         # Specify the contract details and web3 provider
-        contract_address = '0xE02d248a844CF17c9042EB722A671CD08dAa59D4'
+        contract_address = '0x7c45720D60Cc4315f82260Ee169d54409B80aa6c'
         with open("doctor_ABI.json") as f:
             contract_abi = json.load(f)
         web3_provider = 'https://sepolia.infura.io/v3/314f3f9b4c574f9ba6a18204cda5dd8d'
@@ -292,13 +292,64 @@ def make_payment():
     # Return a response
     return jsonify({'success': True},200)
 
+# Load database configuration from config.json
+with open('config.json') as f:
+    config = json.load(f)
 
 
+# Function to check for overlapping or duplicate appointments
+def check_appointment_conflict(doctor_id, appointment_details):
+    conn = mysql.connector.connect(**config['database_config'])
+    cursor = conn.cursor()
+
+    # Check if there's any appointment with the same doctor_id and overlapping appointment_details
+    query = "SELECT * FROM {} WHERE doctor_id = %s AND appointment_details = %s".format(
+        config['main_programs_table'])
+    cursor.execute(query, (doctor_id, appointment_details))
+    conflict = cursor.fetchone()
+
+    cursor.close()
+    conn.close()
+
+    return conflict
+
+# Function to insert appointment into the database
+def insert_appointment(doctor_id, patient_name, appointment_details):
+    conn = mysql.connector.connect(**config['database_config'])
+    cursor = conn.cursor()
+
+    # Insert the appointment into the database
+    query = "INSERT INTO {} (doctor_id, patient_name, appointment_details) VALUES (%s, %s, %s)".format(
+        config['main_programs_table'])
+    cursor.execute(query, (doctor_id, patient_name, appointment_details))
+    conn.commit()
+
+    cursor.close()
+    conn.close()
+
+
+    # Flask route to make appointment
 @app.route('/make_appointment', methods=['POST'])
 def interact_with_blockchain_make_appointment():
     try:
+        # Extract form data
+        form_data = request.json
+        doctor_id = int(form_data.get('doctorId'))
+        patient_name = form_data.get('patientName')
+        appointment_details = form_data.get('appointmentDetails')
+
+        # Check for appointment conflicts
+        conflict = check_appointment_conflict(doctor_id, appointment_details)
+
+        if conflict:
+            return "Appointment conflict: This appointment overlaps with an existing appointment."
+
+        # If no conflicts, insert appointment into the database
+        insert_appointment(doctor_id, patient_name, appointment_details)
+
         # Specify the contract details and web3 provider
-        contract_address = '0xE02d248a844CF17c9042EB722A671CD08dAa59D4'
+        contract_address = '0x7c45720D60Cc4315f82260Ee169d54409B80aa6c'
+
         with open("doctor_ABI.json") as f:
             contract_abi = json.load(f)
         web3_provider = 'https://sepolia.infura.io/v3/314f3f9b4c574f9ba6a18204cda5dd8d'

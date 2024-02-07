@@ -1,0 +1,9 @@
+{
+    "main_programs_table": "appointments1",
+    "database_config": {
+        "host": "34.130.115.19",
+        "user": "interns",
+        "password": "Interns##123##",
+        "database": "Interns"
+    }
+}

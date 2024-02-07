@@ -1,6 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+
+contract DoctorCoin is ERC20 {
+    constructor() ERC20("DoctorCoin", "DCTC") {
+        _mint(msg.sender, 1000000 * (10 ** uint256(decimals())));
+    }
+}
 
 contract Doctors {
 
@@ -8,10 +15,10 @@ contract Doctors {
         uint id;
         string firstName;
         string lastName;
-        string certificateHash; // Assuming certificate is stored off-chain and only hash is kept
+        string certificateHash;
         string specialization;
         string public_key;
-        string location; // New field for the doctor's location
+        string location;
     }
 
     address public usertokenContractAddress;
@@ -20,6 +27,8 @@ contract Doctors {
     mapping(string => string) public publicKeyToSpecialization;
 
     event DoctorAdded(uint id, string firstName, string lastName, string certificateHash, string specialization, string public_key, string location);
+    event AppointmentLogged(uint indexed doctorId, string patientName, string appointmentDetails, uint timestamp);
+    event PaymentReceived(address indexed from, address indexed to, uint amount, uint timestamp);
 
     function addDoctor(
         string memory firstName,
@@ -60,13 +69,15 @@ contract Doctors {
         return publicKeyToSpecialization[public_key];
     }
 
-    function getDoctorBalance(address public_key) public view returns (uint) {
-        // Access the ERC-20 contract using the IERC20 interface
+    function makeAppointment(uint doctorId, string memory patientName, string memory appointmentDetails) public {
+        require(doctorId > 0 && doctorId <= doctors.length, "Invalid doctor ID");
+        emit AppointmentLogged(doctorId, patientName, appointmentDetails, block.timestamp);
+    }
+
+    function receivePayment(uint amount) public payable {
+        require(amount > 0, "Invalid amount");
         IERC20 usertokenContract = IERC20(usertokenContractAddress);
-
-        // Query the balance associated with the doctor's Ethereum address
-        uint balance = usertokenContract.balanceOf(public_key);
-
-        return balance;
+        usertokenContract.transferFrom(msg.sender, address(this), amount);
+        emit PaymentReceived(msg.sender, address(this), amount, block.timestamp);
     }
 }
